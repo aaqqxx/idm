@@ -102,7 +102,7 @@ func InitializeStandaloneServer(configFilePath configs.ConfigFilePath) (app.Stan
 		return app.StandaloneServer{}, nil, err
 	}
 	cron := config.Cron
-	downloadTaskLogic, err := logic.NewDownloadTaskLogic(tokenLogic, accountDataAccessor, downloadTaskDataAccessor, downloadTaskCreatedProducer, fileClient, databaseDatabase, logger, cron)
+	downloadTaskLogic, err := logic.NewDownloadTaskLogic(tokenLogic, accountDataAccessor, downloadTaskDataAccessor, downloadTaskCreatedProducer, fileClient, databaseDatabase, logger, cron, download)
 	if err != nil {
 		cleanup2()
 		cleanup()

@@ -42,3 +42,25 @@ download:
   address: "0.0.0.0:9000"
   username: "root"
   password: "secret123"
+  engine:
+    # Mirrors IDM's constants, tuned for general use.
+    max_connections: 16 # user ceiling; absolute cap is hard_cap
+    hard_cap: 32 # IDM FUN_005bad00: 0x20
+    min_chunk_size: 10240 # IDM: 0x2800, one connection per 10 KiB
+    min_work_unit: 262144 # smallest piece a runtime split creates
+    idle_timeout: "30s" # IDM: 0x1e seconds stall watchdog
+    max_retries: 5
+    buffer_size: 131072
+    enable_resume: true
+    state_directory: "" # default: ./downloads/.checkpoints
+    user_agent: "idm-segmented/1.0"
+    dial_timeout: "15s"
+    max_bytes_per_second: 0 # aggregate rate cap; 0 = unlimited
+    no_overwrite: true # pick a unique name instead of replacing files
+    disable_preallocate: false # preallocate the full size before transfer
+    # Request customisation for gated downloads (CDN Referer, cookies, auth):
+    referer: "" # e.g. "https://example.com/page"
+    headers: {} # e.g. {"X-Api-Key": "..."} (Range/Content-Length are rejected)
+    cookies: [] # e.g. ["session=abc123"]
+    username: "" # HTTP Basic Auth
+    password: ""

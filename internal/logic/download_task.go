@@ -100,6 +100,7 @@ func NewDownloadTaskLogic(
 	database database.Database,
 	logger *zap.Logger,
 	cronConfig configs.Cron,
+	downloadConfig configs.Download,
 ) (DownloadTaskLogic, error) {
 	return &downloadTaskLogic{
 		tokenLogic:                  tokenLogic,
@@ -110,6 +111,7 @@ func NewDownloadTaskLogic(
 		database:                    database,
 		logger:                      logger,
 		cronConfig:                  cronConfig,
+		downloadConfig:              downloadConfig,
 	}, nil
 }
 
@@ -122,6 +124,7 @@ type downloadTaskLogic struct {
 	database                    database.Database
 	logger                      *zap.Logger
 	cronConfig                  configs.Cron
+	downloadConfig              configs.Download
 }
 
 // CreateDownloadTask implements DownloadTaskLogic.
@@ -348,7 +351,7 @@ func (d *downloadTaskLogic) ExecuteDownloadTask(ctx context.Context, in ExecuteD
 
 	switch downloadTask.DownloadType {
 	case uint16(idm.DownloadType_HTTP):
-		downloader, err = NewHTTPDownloader(downloadTask.DownloadURL, d.logger)
+		downloader, err = NewHTTPDownloader(downloadTask.DownloadURL, d.downloadConfig, d.fileClient, d.logger)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("can not create http downloader")
 			return err
@@ -359,21 +362,14 @@ func (d *downloadTaskLogic) ExecuteDownloadTask(ctx context.Context, in ExecuteD
 	}
 
 	fileName := fmt.Sprintf("%d", downloadTask.DownloadTaskID)
-	fileWriteCloser, err := d.fileClient.Write(ctx, fileName)
-	if err != nil {
-		logger.With(zap.Error(err)).Error("can not create file writer")
-		return err
-	}
-	defer fileWriteCloser.Close()
 
-	metadata, err := downloader.Download(ctx, fileWriteCloser)
+	metadata, err := downloader.Download(ctx, fileName)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("filed to download file")
 		return err
 	}
 
 	// Update donwloadTask in database
-	metadata[DownloadTaskMetadataKeyFileName] = fileName
 	jsonMetadata, err := json.Marshal(metadata)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("can not marshal metadata")
